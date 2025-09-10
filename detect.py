@@ -12,7 +12,17 @@ from models import RetinaFace
 from utils.general import draw_detections
 from utils.box_utils import decode, decode_landmarks, nms
 
+@torch.no_grad()
+def inference_face(face_model, img):
 
+    img = cv2.resize(img, (112, 112))
+
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = np.transpose(img, (2, 0, 1))
+    img = torch.from_numpy(img).unsqueeze(0).float()
+    img.div_(255).sub_(0.5).div_(0.5)
+    feat = face_model(img).cpu().numpy().flatten()
+    return feat
 
 def preprocess(original_image):
     # read image

@@ -28,7 +28,7 @@ def cosine_distance_batch(query: np.ndarray, db: np.ndarray) -> np.ndarray:
         dists = 1 - sims
     return dists
 
-# 0.6698492462311557
+# 0.5477386934673367
 def predict_id(query_emb: np.ndarray, db: dict, threshold: float = 0.6 ): 
     """
     query_emb: (d,) numpy array

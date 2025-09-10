@@ -9,6 +9,89 @@ import io
 import html
 import time
 
+import os
+from google.colab import output
+from google.colab.output import eval_js
+from base64 import b64decode
+from IPython.display import Javascript, display
+
+
+
+def take_photo_with_confirm(quality=0.8):
+    js = Javascript('''
+        async function takePhoto(quality) {
+            const div = document.createElement('div');
+            const capture = document.createElement('button');
+            capture.textContent = '📸 Capture';
+            const saveBtn = document.createElement('button');
+            saveBtn.textContent = '✅ Save';
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = '❌ Cancel';
+            saveBtn.style.display = 'none';
+            cancelBtn.style.display = 'none';
+
+            div.appendChild(capture);
+            div.appendChild(saveBtn);
+            div.appendChild(cancelBtn);
+
+            const video = document.createElement('video');
+            video.style.display = 'block';
+            const stream = await navigator.mediaDevices.getUserMedia({video: true});
+
+            document.body.appendChild(div);
+            div.appendChild(video);
+            video.srcObject = stream;
+            await video.play();
+
+            google.colab.output.setIframeHeight(document.documentElement.scrollHeight, true);
+
+            let dataUrl = null;
+            let result = null;
+
+            await new Promise((resolve) => {
+                capture.onclick = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+
+                    dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+                    // Hiện preview
+                    const img = document.createElement('img');
+                    img.src = dataUrl;
+                    img.style.maxWidth = '100%';
+                    div.appendChild(img);
+
+                    // Ẩn nút capture, hiện save/cancel
+                    capture.style.display = 'none';
+                    saveBtn.style.display = 'inline-block';
+                    cancelBtn.style.display = 'inline-block';
+                };
+
+                saveBtn.onclick = () => {
+                    result = "save:" + dataUrl;
+                    resolve();
+                };
+                cancelBtn.onclick = () => {
+                    result = "cancel";
+                    resolve();
+                };
+            });
+
+            stream.getVideoTracks()[0].stop();
+            div.remove();
+            return result;
+        }
+    ''')
+    display(js)
+
+    data = eval_js('takePhoto({})'.format(quality))
+    return data
+
+
+
+
 # function to convert the JavaScript object into an OpenCV image
 def js_to_image(js_reply):
   """
